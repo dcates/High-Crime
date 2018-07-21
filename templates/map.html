@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>4/20</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+    /*
+    (c) 2014, Vladimir Agafonkin
+    simpleheat, a tiny JavaScript library for drawing heatmaps with Canvas
+    https://github.com/mourner/simpleheat
+   */
+   !function(){"use strict";function t(i){return this instanceof t?(this._canvas=i="string"==typeof i?document.getElementById(i):i,this._ctx=i.getContext("2d"),this._width=i.width,this._height=i.height,this._max=1,void this.clear()):new t(i)}t.prototype={defaultRadius:25,defaultGradient:{.4:"blue",.6:"cyan",.7:"lime",.8:"yellow",1:"red"},data:function(t,i){return this._data=t,this},max:function(t){return this._max=t,this},add:function(t){return this._data.push(t),this},clear:function(){return this._data=[],this},radius:function(t,i){i=i||15;var a=this._circle=document.createElement("canvas"),s=a.getContext("2d"),e=this._r=t+i;return a.width=a.height=2*e,s.shadowOffsetX=s.shadowOffsetY=200,s.shadowBlur=i,s.shadowColor="black",s.beginPath(),s.arc(e-200,e-200,t,0,2*Math.PI,!0),s.closePath(),s.fill(),this},gradient:function(t){var i=document.createElement("canvas"),a=i.getContext("2d"),s=a.createLinearGradient(0,0,0,256);i.width=1,i.height=256;for(var e in t)s.addColorStop(e,t[e]);return a.fillStyle=s,a.fillRect(0,0,1,256),this._grad=a.getImageData(0,0,1,256).data,this},draw:function(t){this._circle||this.radius(this.defaultRadius),this._grad||this.gradient(this.defaultGradient);var i=this._ctx;i.clearRect(0,0,this._width,this._height);for(var a,s=0,e=this._data.length;e>s;s++)a=this._data[s],i.globalAlpha=Math.max(a[2]/this._max,t||.05),i.drawImage(this._circle,a[0]-this._r,a[1]-this._r);var n=i.getImageData(0,0,this._width,this._height);return this._colorize(n.data,this._grad),i.putImageData(n,0,0),this},_colorize:function(t,i){for(var a,s=3,e=t.length;e>s;s+=4)a=4*t[s],a&&(t[s-3]=i[a],t[s-2]=i[a+1],t[s-1]=i[a+2])}},window.simpleheat=t}(),/*
+    (c) 2014, Vladimir Agafonkin
+    Leaflet.heat, a tiny and fast heatmap plugin for Leaflet.
+    https://github.com/Leaflet/Leaflet.heat
+   */
+   L.HeatLayer=(L.Layer?L.Layer:L.Class).extend({initialize:function(t,i){this._latlngs=t,L.setOptions(this,i)},setLatLngs:function(t){return this._latlngs=t,this.redraw()},addLatLng:function(t){return this._latlngs.push(t),this.redraw()},setOptions:function(t){return L.setOptions(this,t),this._heat&&this._updateOptions(),this.redraw()},redraw:function(){return!this._heat||this._frame||this._map._animating||(this._frame=L.Util.requestAnimFrame(this._redraw,this)),this},onAdd:function(t){this._map=t,this._canvas||this._initCanvas(),t._panes.overlayPane.appendChild(this._canvas),t.on("moveend",this._reset,this),t.options.zoomAnimation&&L.Browser.any3d&&t.on("zoomanim",this._animateZoom,this),this._reset()},onRemove:function(t){t.getPanes().overlayPane.removeChild(this._canvas),t.off("moveend",this._reset,this),t.options.zoomAnimation&&t.off("zoomanim",this._animateZoom,this)},addTo:function(t){return t.addLayer(this),this},_initCanvas:function(){var t=this._canvas=L.DomUtil.create("canvas","leaflet-heatmap-layer leaflet-layer"),i=L.DomUtil.testProp(["transformOrigin","WebkitTransformOrigin","msTransformOrigin"]);t.style[i]="50% 50%";var a=this._map.getSize();t.width=a.x,t.height=a.y;var s=this._map.options.zoomAnimation&&L.Browser.any3d;L.DomUtil.addClass(t,"leaflet-zoom-"+(s?"animated":"hide")),this._heat=simpleheat(t),this._updateOptions()},_updateOptions:function(){this._heat.radius(this.options.radius||this._heat.defaultRadius,this.options.blur),this.options.gradient&&this._heat.gradient(this.options.gradient),this.options.max&&this._heat.max(this.options.max)},_reset:function(){var t=this._map.containerPointToLayerPoint([0,0]);L.DomUtil.setPosition(this._canvas,t);var i=this._map.getSize();this._heat._width!==i.x&&(this._canvas.width=this._heat._width=i.x),this._heat._height!==i.y&&(this._canvas.height=this._heat._height=i.y),this._redraw()},_redraw:function(){var t,i,a,s,e,n,h,o,r,d=[],_=this._heat._r,l=this._map.getSize(),m=new L.Bounds(L.point([-_,-_]),l.add([_,_])),c=void 0===this.options.max?1:this.options.max,u=void 0===this.options.maxZoom?this._map.getMaxZoom():this.options.maxZoom,f=1/Math.pow(2,Math.max(0,Math.min(u-this._map.getZoom(),12))),g=_/2,p=[],v=this._map._getMapPanePos(),w=v.x%g,y=v.y%g;for(t=0,i=this._latlngs.length;i>t;t++)if(a=this._map.latLngToContainerPoint(this._latlngs[t]),m.contains(a)){e=Math.floor((a.x-w)/g)+2,n=Math.floor((a.y-y)/g)+2;var x=void 0!==this._latlngs[t].alt?this._latlngs[t].alt:void 0!==this._latlngs[t][2]?+this._latlngs[t][2]:1;r=x*f,p[n]=p[n]||[],s=p[n][e],s?(s[0]=(s[0]*s[2]+a.x*r)/(s[2]+r),s[1]=(s[1]*s[2]+a.y*r)/(s[2]+r),s[2]+=r):p[n][e]=[a.x,a.y,r]}for(t=0,i=p.length;i>t;t++)if(p[t])for(h=0,o=p[t].length;o>h;h++)s=p[t][h],s&&d.push([Math.round(s[0]),Math.round(s[1]),Math.min(s[2],c)]);this._heat.data(d).draw(this.options.minOpacity),this._frame=null},_animateZoom:function(t){var i=this._map.getZoomScale(t.zoom),a=this._map._getCenterOffset(t.center)._multiplyBy(-i).subtract(this._map._getMapPanePos());L.DomUtil.setTransform?L.DomUtil.setTransform(this._canvas,a,i):this._canvas.style[L.DomUtil.TRANSFORM]=L.DomUtil.getTranslateString(a)+" scale("+i+")"}}),L.heatLayer=function(t,i){return new L.HeatLayer(t,i)};
+</script>
+  </head>
+<body>
+<!-- <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Cannabis_leaf.svg/562px-Cannabis_leaf.svg.png"> -->
+<div id="map"></div>
+<style>
+  body {
+    padding: 0px;
+    margin: 0px;
+  }
+  #map,
+  body,
+  html {
+    height: 100%;
+  }
+</style>
+<script type="text/javascript">
+
+var greenIcon = L.icon({
+    iconUrl: src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Cannabis_leaf.svg/562px-Cannabis_leaf.svg.png",
+    iconSize:     [38, 40],
+});
+
+var a1=L.marker([39.758127,-105.021361], {icon: greenIcon}).bindPopup('<center><strong>BIOCARE</strong><br>Last Updated: 2/23/17</center>').openPopup();
+    a2=L.marker([39.685204,-104.987238], {icon: greenIcon}).bindPopup('<center><strong>WELLSPRING COLLECTIVE</strong><br> Last Updated: 2/23/17</center>').openPopup();
+    a3=L.marker([39.761868,-105.0115], {icon: greenIcon}).bindPopup('<center><strong>THE RELEAF CENTER</strong><br>Last Updated: 2/23/17</center>').openPopup();
+    a4=L.marker([39.710949,-104.936444], {icon: greenIcon}).bindPopup('<center><strong>KIND LOVE</strong><br>Last Updated: 10/27/16</center>').openPopup();
+    a5=L.marker([39.770762,-104.845143], {icon: greenIcon}).bindPopup('<center><strong>NUGGS</strong><br>Last Updated: 7/15/16</center>').openPopup();
+    a6=L.marker([39.740645,-105.048961], {icon: greenIcon}).bindPopup('<center><strong>THE PIG ‘N’ WHISTLE</strong><br>Last Updated: 4/16/16</center>').openPopup();
+    a7=L.marker([39.817853,-105.025632], {icon: greenIcon}).bindPopup('<center><strong>THE GREEN SOLUTION - WESTMINSTER</strong><br>Last Updated: 4/16/16</center>').openPopup();
+    a8=L.marker([39.777999,-104.924189], {icon: greenIcon}).bindPopup('<center><strong>THE GREEN SOLUTION - DENVER EAST</strong><br>Last Updated: 4/16/16</center>').openPopup();
+    a9=L.marker([39.711384,-105.018233], {icon: greenIcon}).bindPopup('<center><strong>THE GREEN SOLUTION - DENVER</strong><br>Last Updated: 4/16/16</center>').openPopup();
+    a10=L.marker([39.773231,-104.993971], {icon: greenIcon}).bindPopup('<center><strong>THE GRASS STATION (KINDMAN)</strong><br>Last Updated: 4/12/16</center>').openPopup();
+    a11=L.marker([39.754272,-104.979125], {icon: greenIcon}).bindPopup('<center><strong>DENVER KUSH CLUB</strong><br>Last Updated: 2/23/17</center>').openPopup();
+    a12=L.marker([39.678749,-104.914581], {icon: greenIcon}).bindPopup('<center><strong>OASIS CANNABIS SUPERSTORE - SOUTH</strong><br>Last Updated: 3/11/16</center>').openPopup();
+    a13=L.marker([39.684708,-104.987792], {icon: greenIcon}).bindPopup('<center><strong>BACK TO THE GARDEN</strong><br>Last Updated: 12/22/15</center>').openPopup();
+    a14=L.marker([39.700596,-104.909098], {icon: greenIcon}).bindPopup('<center><strong>WELLNESS CENTER OF THE ROCKIES</strong><br>Last Updated: 10/26/15</center>').openPopup();
+    a15=L.marker([39.769277,-105.039658], {icon: greenIcon}).bindPopup('<center><strong>BUDDY BOY - 38TH AVE</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a16=L.marker([39.710959,-105.021749], {icon: greenIcon}).bindPopup('<center><strong>NEXT HARVEST</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a17=L.marker([39.633948,-105.108945], {icon: greenIcon}).bindPopup('<center><strong>COLORADO CANNABIS CONNECTION</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a18=L.marker([39.670038,-104.987306], {icon: greenIcon}).bindPopup('<center><strong>HERBAL ALTERNATIVES</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a19=L.marker([39.679337,-104.987891], {icon: greenIcon}).bindPopup('<center><strong>COLORADO WELLNESS INC.</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a20=L.marker([39.69262,-104.990698], {icon: greenIcon}).bindPopup('<center><strong>REDEYE RELEAF</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a21=L.marker([39.759495,-104.986203], {icon: greenIcon}).bindPopup('<center><strong>URBA AT MMD OF COLORADO - FIVE POINTS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a22=L.marker([39.743455,-104.989593], {icon: greenIcon}).bindPopup('<center><strong>EUFLORA</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a23=L.marker([39.770314,-104.971253], {icon: greenIcon}).bindPopup('<center><strong>BUDDY BOY - WALNUT ST</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a24=L.marker([39.719335,-105.025447], {icon: greenIcon}).bindPopup('<center><strong>BUDDY BOY - NORTH FEDERAL BLVD</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a25=L.marker([39.772055,-104.993936], {icon: greenIcon}).bindPopup('<center><strong>PURE MEDICAL DISPENSARY - NORTHWEST</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a26=L.marker([39.685243,-104.942079], {icon: greenIcon}).bindPopup('<center><strong>THE CLINIC COLORADO</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a27=L.marker([39.776249,-105.011682], {icon: greenIcon}).bindPopup('<center><strong>SWEET LEAF - TEJON</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a28=L.marker([39.76136,-104.982035], {icon: greenIcon}).bindPopup('<center><strong>LIVWELL - LARIMER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a29=L.marker([39.752584,-104.991667], {icon: greenIcon}).bindPopup('<center><strong>CANNABIS STATION</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a30=L.marker([39.711497,-105.002278], {icon: greenIcon}).bindPopup('<center><strong>ROCKY MOUNTAIN HIGH - ALAMEDA</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a31=L.marker([39.678337,-104.967819], {icon: greenIcon}).bindPopup('<center><strong>STARBUDS - EVANS</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a32=L.marker([39.70707,-104.93871], {icon: greenIcon}).bindPopup('<center><strong>EMERALD FIELDS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a33=L.marker([39.744269,-105.025621], {icon: greenIcon}).bindPopup('<center><strong>MILE HIGH RECREATIONAL CANNABIS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a34=L.marker([39.769887,-104.929851], {icon: greenIcon}).bindPopup('<center><strong>DANK COLORADO</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a35=L.marker([39.785519,-104.959711], {icon: greenIcon}).bindPopup('<center><strong>RIVER ROCK NORTH</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a36=L.marker([39.728523,-104.999835], {icon: greenIcon}).bindPopup('<center><strong>ALL GREENS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a37=L.marker([39.739913,-104.982633], {icon: greenIcon}).bindPopup('<center><strong>GOOD CHEMISTRY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a38=L.marker([39.740349,-104.950613], {icon: greenIcon}).bindPopup('<center><strong>GROUNDSWELL</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a39=L.marker([39.725499,-104.999448], {icon: greenIcon}).bindPopup('<center><strong>RIVER ROCK SOUTH</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a40=L.marker([39.742848,-104.979547], {icon: greenIcon}).bindPopup('<center><strong>IVITA WELLNESS - PEARL</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a41=L.marker([39.772637,-104.968061], {icon: greenIcon}).bindPopup('<center><strong>IVITA WELLNESS - FRANKLIN</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a42=L.marker([39.751744,-104.999905], {icon: greenIcon}).bindPopup('<center><strong>LODO WELLNESS CENTER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a43=L.marker([39.678749,-104.914581], {icon: greenIcon}).bindPopup('<center><strong>MEDICINAL OASIS</strong><br>ast Updated: 9/24/15</center>').openPopup();
+    a44=L.marker([39.717888,-104.987101], {icon: greenIcon}).bindPopup('<center><strong>HERBAN MEDICINALS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a45=L.marker([39.720494,-104.998421], {icon: greenIcon}).bindPopup('<center><strong>KIND MEDS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a46=L.marker([39.715095,-104.981213], {icon: greenIcon}).bindPopup('<center><strong>B-GOOD</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a47=L.marker([39.722455,-105.006706], {icon: greenIcon}).bindPopup('<center><strong>L EAGLE SERVICES</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a48=L.marker([39.739838,-104.969362], {icon: greenIcon}).bindPopup('<center><strong>NATURES CURE III</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a49=L.marker([39.740395,-104.933296], {icon: greenIcon}).bindPopup('<center><strong>STICKY BUDS - COLFAX</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a50=L.marker([39.714403,-104.999782], {icon: greenIcon}).bindPopup('<center><strong>BUDDY BOY - KALAMTH ST.</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a51=L.marker([39.720515,-104.987192], {icon: greenIcon}).bindPopup('<center><strong>PEAK MJ</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a52=L.marker([39.739855,-104.962571], {icon: greenIcon}).bindPopup('<center><strong>HIGH LEVEL HEALTH - COLFAX</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a53=L.marker([39.724657,-105.018987], {icon: greenIcon}).bindPopup('<center><strong>FIREHOUSE ORGANICS - CENTRAL</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a54=L.marker([39.733094,-105.025566], {icon: greenIcon}).bindPopup('<center><strong>SENSE OF HEALING</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a55=L.marker([39.731274,-105.012413], {icon: greenIcon}).bindPopup('<center><strong>A CUT OFF THE TOP</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a56=L.marker([39.654794,-104.885188], {icon: greenIcon}).bindPopup('<center><strong>ALTITUDE WELLNESS CENTER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a57=L.marker([39.688332,-104.941625], {icon: greenIcon}).bindPopup('<center><strong>PREFERRED ORGANIC THERAPY & WELLNESS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a58=L.marker([39.680113,-104.930992], {icon: greenIcon}).bindPopup('<center><strong>MR. NICE GUYS WELLNESS CENTER</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a59=L.marker([39.654153,-104.868452], {icon: greenIcon}).bindPopup('<center><strong>SATICA</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a60=L.marker([39.773137,-105.053571], {icon: greenIcon}).bindPopup('<center><strong>BERKELEY TRU CANNABIS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a61=L.marker([39.769758,-105.031323], {icon: greenIcon}).bindPopup('<center><strong>WHOLE MEDS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a62=L.marker([39.724623,-105.025553], {icon: greenIcon}).bindPopup('<center><strong>NULEAF</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a63=L.marker([39.776733,-105.052568], {icon: greenIcon}).bindPopup('<center><strong>FIREHOUSE ORGANICS - ZENOBIA ST</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a64=L.marker([39.788382,-104.958371], {icon: greenIcon}).bindPopup('<center><strong>BUDDY BOY - YORK ST</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a65=L.marker([39.737508,-104.999174], {icon: greenIcon}).bindPopup('<center><strong>GREEN MAN CANNABIS - DOWNTOWN</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a66=L.marker([39.720653,-105.013508], {icon: greenIcon}).bindPopup('<center><strong>PERSONALIZED ORGANIC TREATMENTS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a67=L.marker([39.739756,-104.914805], {icon: greenIcon}).bindPopup('<center><strong>FROSTED LEAF - COLFAX</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a68=L.marker([39.723723,-105.025469], {icon: greenIcon}).bindPopup('<center><strong>FROSTED LEAF - FEDERAL</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a69=L.marker([39.653368,-104.90372], {icon: greenIcon}).bindPopup('<center><strong>GREEN MAN CANNABIS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a70=L.marker([39.679316,-104.989748], {icon: greenIcon}).bindPopup('<center><strong>ARTISANAL MEDICINALS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a71=L.marker([39.652232,-104.880751], {icon: greenIcon}).bindPopup('<center><strong>TETRA HYDRO CENTER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a72=L.marker([39.672828,-104.940225], {icon: greenIcon}).bindPopup('<center><strong>THE RETREAT - A STRAINWISE DISPENSARY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a73=L.marker([39.729023,-105.020219], {icon: greenIcon}).bindPopup('<center><strong>THE HAVEN - A STRAINWISE DISPENSARY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a74=L.marker([39.788309,-104.963117], {icon: greenIcon}).bindPopup('<center><strong>THE SANCTUARY - A STRAINWISE DISPENSARY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a75=L.marker([39.773671,-104.943312], {icon: greenIcon}).bindPopup('<center><strong>THE SHELTER - A STRAINWISE DISPENSARY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a76=L.marker([39.717923,-105.024701], {icon: greenIcon}).bindPopup('<center><strong>THE GROVE - A STRAINWISE DISPENSARY</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a77=L.marker([39.728138,-105.053132], {icon: greenIcon}).bindPopup('<center><strong>TRENCHTOWN MEDICAL MARIJUANA CENTER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a78=L.marker([39.747844,-105.024853], {icon: greenIcon}).bindPopup('<center><strong>PINK HOUSE - MILE HIGH</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a79=L.marker([39.769554,-105.04823], {icon: greenIcon}).bindPopup('<center><strong>AT HOME REMEDIES</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a80=L.marker([39.716599,-104.993992], {icon: greenIcon}).bindPopup('<center><strong>ADVANCED MEDICAL ALTERNATIVES (AMA)</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a81=L.marker([39.789963,-105.026437], {icon: greenIcon}).bindPopup('<center><strong>EMERALD CITY ORGANICS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a82=L.marker([39.769569,-105.020105], {icon: greenIcon}).bindPopup('<center><strong>URBA AT MMD OF COLORADO</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a83=L.marker([39.790937,-104.978027], {icon: greenIcon}).bindPopup('<center><strong>LACONTES CLONE BAR + DISPENSARY</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a84=L.marker([39.78324,-104.995066], {icon: greenIcon}).bindPopup('<center><strong>FOX STREET WELLNESS</strong><br> Last Updated: 9/24/15</center>').openPopup();
+    a85=L.marker([39.783538,-104.851938], {icon: greenIcon}).bindPopup('<center><strong>MEDICINE MAN - DENVER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a86=L.marker([39.777626,-104.969985], {icon: greenIcon}).bindPopup('<center><strong>3D CANNABIS CENTERS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a87=L.marker([39.772165,-104.921775], {icon: greenIcon}).bindPopup('<center><strong>LIGHTSHADE - PEORIA</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a88=L.marker([39.736991,-104.971996], {icon: greenIcon}).bindPopup('<center><strong>ALTERNATIVE MEDICINE ON CAPITOL HILL (AMCH)</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a89=L.marker([39.711453,-104.991929], {icon: greenIcon}).bindPopup('<center><strong>STICKY BUDS ALAMDEA</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a90=L.marker([39.769404,-105.020881], {icon: greenIcon}).bindPopup('<center><strong>THE GIVING TREE OF DENVER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a91=L.marker([39.673204,-104.987261], {icon: greenIcon}).bindPopup('<center><strong>COLORADO ALTERNATIVE MEDICINE (CAM)</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a92=L.marker([39.75002,-104.997599], {icon: greenIcon}).bindPopup('<center><strong>NATURAL REMEDIES</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a93=L.marker([39.769506,-105.020288], {icon: greenIcon}).bindPopup('<center><strong>URBAN DISPENSARY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a94=L.marker([39.739954,-104.927144], {icon: greenIcon}).bindPopup('<center><strong>COLORADO CANNABIS FACILITY (CCF)</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a95=L.marker([39.746395,-104.994421], {icon: greenIcon}).bindPopup('<center><strong>NATIVE ROOTS APOTHECARY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a96=L.marker([39.613372,-104.991808], {icon: greenIcon}).bindPopup('<center><strong>MOTHER NATURES MIRACLE</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a97=L.marker([39.675026,-105.000924], {icon: greenIcon}).bindPopup('<center><strong>MILE HIGH WELLNESS - GREEN STREET</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a98=L.marker([39.683481,-104.938383], {icon: greenIcon}).bindPopup('<center><strong>MILE HIGH REMEDIES</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a99=L.marker([39.729682,-104.987848], {icon: greenIcon}).bindPopup('<center><strong>MILE HIGH GREEN CROSS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a100=L.marker([39.740459,-104.893148], {icon: greenIcon}).bindPopup('<center><strong>METRO CANNABIS, INC.</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a101=L.marker([39.749661,-105.001365], {icon: greenIcon}).bindPopup('<center><strong>LOTUS MEDICAL - DENVER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a102=L.marker([39.736993,-104.993434], {icon: greenIcon}).bindPopup('<center><strong>LOCAL PRODUCT OF COLORADO</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a103=L.marker([39.692167,-104.987706], {icon: greenIcon}).bindPopup('<center><strong>LITTLE GREEN PHARMACY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a104=L.marker([39.682317,-104.987851], {icon: greenIcon}).bindPopup('<center><strong>THE KIND ROOM</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a105=L.marker([39.716427,-104.998193], {icon: greenIcon}).bindPopup('<center><strong>KARMACEUTICALS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a106=L.marker([39.730278,-104.986485], {icon: greenIcon}).bindPopup('<center><strong>HERBS 4 YOU</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a107=L.marker([39.711729,-105.052519], {icon: greenIcon}).bindPopup('<center><strong>HERBAL REMEDIES</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a108=L.marker([39.681847,-104.98788], {icon: greenIcon}).bindPopup('<center><strong>THE HERBAL CENTER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a109=L.marker([39.711464,-104.990707], {icon: greenIcon}).bindPopup('<center><strong>THE HEALING HOUSE</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a110=L.marker([39.707034,-105.00027], {icon: greenIcon}).bindPopup('<center><strong>GREENWERKZ - CUSTER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a111=L.marker([39.653895,-104.908362], {icon: greenIcon}).bindPopup('<center><strong>GREEN CROSS OF CHERRY CREEK</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a112=L.marker([39.683492,-104.880444], {icon: greenIcon}).bindPopup('<center><strong>GREEN CROSS - DENVER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a113=L.marker([39.771923,-104.907997], {icon: greenIcon}).bindPopup('<center><strong>FLAVORED ESSENTIALS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a114=L.marker([39.688191,-104.987264], {icon: greenIcon}).bindPopup('<center><strong>EVERGREEN APOTHECARY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a115=L.marker([39.716942,-104.988012], {icon: greenIcon}).bindPopup('<center><strong>DENVER RELIEF</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a116=L.marker([39.739956,-104.918764], {icon: greenIcon}).bindPopup('<center><strong>MINDFUL</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a117=L.marker([39.750621,-105.000281], {icon: greenIcon}).bindPopup('<center><strong>ROCKY MOUNTAIN HIGH - DENVER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a118=L.marker([39.765074,-104.994336], {icon: greenIcon}).bindPopup('<center><strong>DENCO ALTERNATIVE MEDICINE</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a119=L.marker([39.675499,-104.987299], {icon: greenIcon}).bindPopup('<center><strong>DELTA 9</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a120=L.marker([39.7629,-104.979376], {icon: greenIcon}).bindPopup('<center><strong>BOTANICO</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a121=L.marker([39.754363,-104.991138], {icon: greenIcon}).bindPopup('<center><strong>BALLPARK HOLISTIC DISPENSARY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a122=L.marker([39.744082,-104.973077], {icon: greenIcon}).bindPopup('<center><strong>THE HEALTH CENTER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a123=L.marker([39.769147,-105.003299], {icon: greenIcon}).bindPopup('<center><strong>DOCTORS ORDERS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a124=L.marker([39.681867,-104.988104], {icon: greenIcon}).bindPopup('<center><strong>A CUT ABOVE - DENVER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a125=L.marker([39.68328,-105.024579], {icon: greenIcon}).bindPopup('<center><strong>REMEDY CARE CENTER - SOLACE MEDS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a126=L.marker([39.6837,-104.987284], {icon: greenIcon}).bindPopup('<center><strong>GANJA GOURMET</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a127=L.marker([39.737289,-104.994404], {icon: greenIcon}).bindPopup('<center><strong>MMJ AMERICA - GOLDEN TRIANGLE</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a128=L.marker([39.731737,-104.985926], {icon: greenIcon}).bindPopup('<center><strong>HIGH LEVEL HEALTH - LINCOLN</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a129=L.marker([39.721244,-104.950684], {icon: greenIcon}).bindPopup('<center><strong>CAREGIVERS FOR LIFE</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a130=L.marker([39.680052,-104.987785], {icon: greenIcon}).bindPopup('<center><strong>WALKING RAVEN</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a131=L.marker([39.787467,-104.941133], {icon: greenIcon}).bindPopup('<center><strong>TIMBERLINE HERBAL CLINIC</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a132=L.marker([39.769141,-105.052248], {icon: greenIcon}).bindPopup('<center><strong>SWEET LEAF MEDICAL MARIJUANA</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a133=L.marker([39.769147,-105.003299], {icon: greenIcon}).bindPopup('<center><strong>SUNNYSIDE ALTERNATIVE MEDICINE</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a134=L.marker([39.754364,-104.991231], {icon: greenIcon}).bindPopup('<center><strong>DENVER RECREATIONAL DISPENSARY (DEN-REC)</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a135=L.marker([39.740501,-105.039054], {icon: greenIcon}).bindPopup('<center><strong>SOUTHWEST ALTERNATIVE CARE - COLFAX</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a136=L.marker([39.764527,-104.980551], {icon: greenIcon}).bindPopup('<center><strong>RINO SUPPLY COMPANY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a137=L.marker([39.73444,-104.990616], {icon: greenIcon}).bindPopup('<center><strong>PURE MEDICAL DISPENSARY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a138=L.marker([39.675716,-104.98778], {icon: greenIcon}).bindPopup('<center><strong>PATIENTS CHOICE OF COLORADO - LIVE GREEN</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a139=L.marker([39.749761,-104.987091], {icon: greenIcon}).bindPopup('<center><strong>GREEN DEPOT</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a140=L.marker([39.678993,-104.997033], {icon: greenIcon}).bindPopup('<center><strong>SANTE ALTERNATIVE WELLNESS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a141=L.marker([39.673401,-104.973725], {icon: greenIcon}).bindPopup('<center><strong>URBAN CANNABIS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a142=L.marker([39.637429,-104.898827], {icon: greenIcon}).bindPopup('<center><strong>BIOHEALTH WELLNESS CENTER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a143=L.marker([39.698964,-104.983746], {icon: greenIcon}).bindPopup('<center><strong>THE HERBAL CURE</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a144=L.marker([39.674917,-104.902613], {icon: greenIcon}).bindPopup('<center><strong>GREEN LEAF</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a145=L.marker([39.740374,-104.933159], {icon: greenIcon}).bindPopup('<center><strong>THE CLINIC ON COLFAX</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a146=L.marker([39.681763,-105.129801], {icon: greenIcon}).bindPopup('<center><strong>THE CLINIC ON JEWELL</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a147=L.marker([39.77036,-105.044276], {icon: greenIcon}).bindPopup('<center><strong>GRASSROOTS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a148=L.marker([39.739902,-104.921433], {icon: greenIcon}).bindPopup('<center><strong>PURE MEDICAL DISPENSARY - COLFAX</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a149=L.marker([39.700596,-104.909098], {icon: greenIcon}).bindPopup('<center><strong>ALTERNATIVE MEDICINE OF SOUTHEAST DENVER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a150=L.marker([39.721263,-104.954827], {icon: greenIcon}).bindPopup('<center><strong>ALPINE HERBAL WELLNESS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a151=L.marker([39.748607,-105.053716], {icon: greenIcon}).bindPopup('<center><strong>NORTHERN LIGHTS CANNABIS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a152=L.marker([39.748169,-104.984163], {icon: greenIcon}).bindPopup('<center><strong>MMJ AMERICA - UPTOWN</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a153=L.marker([39.752125,-104.989891], {icon: greenIcon}).bindPopup('<center><strong>MMJ AMERICA - DOWNTOWN</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a154=L.marker([39.665865,-104.94103], {icon: greenIcon}).bindPopup('<center><strong>CDS/THC UNIVERSITY HILLS</strong><br>Last Updated: 2/23/17</center>').openPopup();
+    a155=L.marker([39.727441,-104.985588], {icon: greenIcon}).bindPopup('<center><strong>THE MEDIJUANA CENTER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a156=L.marker([39.696692,-104.961459], {icon: greenIcon}).bindPopup('<center><strong>SWEET LEAF</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a157=L.marker([39.697172,-104.933723], {icon: greenIcon}).bindPopup('<center><strong>NATURES BEST ALTERNATICE MEDICINE</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a158=L.marker([39.708354,-104.874947], {icon: greenIcon}).bindPopup('<center><strong>WELLNESS CENTER OF DENVER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a159=L.marker([39.66723,-104.916533], {icon: greenIcon}).bindPopup('<center><strong>CURE COLORADO</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a160=L.marker([39.752399,-104.98491], {icon: greenIcon}).bindPopup('<center><strong>UNIVERSAL HERBS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a161=L.marker([39.679196,-104.91963], {icon: greenIcon}).bindPopup('<center><strong>SACRED SEED</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a162=L.marker([39.683492,-104.880444], {icon: greenIcon}).bindPopup('<center><strong>GREEN CROSS CAREGIVERS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a163=L.marker([39.690415,-104.991891], {icon: greenIcon}).bindPopup('<center><strong>BUD CELLAR</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a164=L.marker([39.678337,-104.967819], {icon: greenIcon}).bindPopup('<center><strong>CITIMED</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a165=L.marker([39.761949,-105.03371], {icon: greenIcon}).bindPopup('<center><strong>THE CLINIC AT HIGHLANDS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a166=L.marker([39.725897,-104.978018], {icon: greenIcon}).bindPopup('<center><strong>THE CLINIC AT CAPITOL HILL</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a167=L.marker([39.705898,-105.039939], {icon: greenIcon}).bindPopup('<center><strong>PATIENTS CHOICE OF COLORADO II - LIVE GREEN II</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a168=L.marker([39.708718,-104.987329], {icon: greenIcon}).bindPopup('<center><strong>LIVWELL - BROADWAY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a169=L.marker([39.638112,-105.035696], {icon: greenIcon}).bindPopup('<center><strong>CANNAMART - DENVER</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a170=L.marker([39.712747,-105.003557], {icon: greenIcon}).bindPopup('<center><strong>BUDDIES WELLNESS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a171=L.marker([39.691912,-105.052773], {icon: greenIcon}).bindPopup('<center><strong>MILE HIGH DISPENSARY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a172=L.marker([39.721782,-105.024807], {icon: greenIcon}).bindPopup('<center><strong>HIGH STREET GROWERS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a173=L.marker([39.697386,-104.994838], {icon: greenIcon}).bindPopup('<center><strong>SOUTHWEST ALTERNATIVE CARE</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a174=L.marker([39.696418,-105.008327], {icon: greenIcon}).bindPopup('<center><strong>GREENFIELDS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a175=L.marker([39.688358,-105.024626], {icon: greenIcon}).bindPopup('<center><strong>ALTITUDE DISPENSARY - FEDERAL</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a176=L.marker([39.678099,-104.909052], {icon: greenIcon}).bindPopup('<center><strong>ALTITUDE DISPENSARY - EVANS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a177=L.marker([39.678951,-105.012895], {icon: greenIcon}).bindPopup('<center><strong>LIVWELL EVANS</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a178=L.marker([39.695249,-104.999996], {icon: greenIcon}).bindPopup('<center><strong>COLORADO HARVEST COMPANY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a179=L.marker([39.673401,-104.973725], {icon: greenIcon}).bindPopup('<center><strong>HEALING HOUSE - DOWNING</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a180=L.marker([39.714974,-105.024762], {icon: greenIcon}).bindPopup('<center><strong>ELEMENT FOUR20</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a181=L.marker([39.781805,-104.966494], {icon: greenIcon}).bindPopup('<center><strong>STARBUDS - BRIGHTON</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a182=L.marker([39.786874,-104.946028], {icon: greenIcon}).bindPopup('<center><strong>DENVER DISPENSARY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a183=L.marker([39.708087,-105.024556], {icon: greenIcon}).bindPopup('<center><strong>BUDDY BOY - SOUTH FEDERAL BLVD</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a184=L.marker([39.780426,-104.862518], {icon: greenIcon}).bindPopup('<center><strong>METROPOLIS MEDICAL</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a185=L.marker([39.777944,-104.979791], {icon: greenIcon}).bindPopup('<center><strong>GENERATION HEALTH</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a186=L.marker([39.769438,-104.999608], {icon: greenIcon}).bindPopup('<center><strong>STANDING AKIMBO</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a187=L.marker([39.779633,-104.920361], {icon: greenIcon}).bindPopup('<center><strong>DENVERDAM</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    // a188=L.marker([39.904872,-104.991381], {icon: greenIcon}).bindPopup('<center><strong>BOTANACARE MMC</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a189=L.marker([39.740326,-104.928414], {icon: greenIcon}).bindPopup('<center><strong>VERDE WELLNESS CENTER - PINK HOUSE</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a190=L.marker([39.69041,-104.98062], {icon: greenIcon}).bindPopup('<center><strong>PINK HOUSE - PEARL</strong><br>Last Updated: 9/24/15</center>').openPopup();
+    a191=L.marker([39.71435,-104.946415], {icon: greenIcon}).bindPopup('<center><strong>PINK HOUSE CHERRY</strong><br>Last Updated: 9/24/15</center>').openPopup();
+
+
+
+
+var points = L.layerGroup([a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31,a32,a33,a34,a35,a36,a37,a38,a39,a40,a41,a42,a43,a44,a45,a46,a47,a48,a49,a50,a51,a52,a53,a54,a56,a55,a57,a58,a59,a60,a61,a62,a63,a64,a65,a66,a67,a68,a69,a70,a71,a72,a73,a74,a75,a76,a77,a78,a79,a80,a81,a82,a83,a84,a85,a86,a87,a88,a89,a90,a91,a92,a93,a94,a95,a96,a97,a98,a99,a100,a101,a102,a103,a104,a105,a106,a107,a108,a109,a110,a111,a112,a113,a114,a115,a116,a117,a118,a119,a120,a121,a122,a123,a124,a125,a126,a127,a128,a129,a130,a131,a132,a133,a134,a135,a136,a137,a138,a139,a140,a141,a142,a143,a144,a145,a146,a147,a148,a149,a150,a151,a152,a153,a154,a155,a156,a157,a158,a159,a160,a161,a162,a163,a164,a165,a166,a167,a168,a169,a170,a171,a172,a173,a174,a175,a176,a177,a178,a179,a180,a181,a182,a183,a184,a185,a186,a187,a189,a190,a191]);
+
+
+var streets   = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {id: 'MapID', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'});
+
+var map = L.map('map', {
+    center: [39.73, -104.89],
+    zoom: 11,
+    layers: [streets, points]
+});
+
+d3.json("/all", function(response){
+  var heatArray1 = [];
+  var heatArray2 = [];
+  var heatArray3 = [];
+  var heatArray4 = [];
+  var heatArray5 = [];
+  var heatArray6 = [];
+   for (var i = 0; i < response.GEO_LON.length; i++) {
+    
+    var d = new Date();
+    var d_2013 = d.getFullYear()-5;
+    var d_2014 = d.getFullYear()-4;
+    var d_2015 = d.getFullYear()-3;
+    var d_2016 = d.getFullYear()-2;
+    var d_2017 = d.getFullYear()-1;
+    var d_2018 = d.getFullYear()-0;
+    
+    var date3 = new Date(response.REPORTED_DATE[i]);
+    crime_date1 = date3.getFullYear();
+
+    if (crime_date1 == d_2013){
+      heatArray1.push([response.GEO_LAT[i], response.GEO_LON[i]])
+      var heat1 = L.heatLayer(heatArray1, {
+          radius : 5,
+          blur : 2,
+          gradient : {.5: 'red'},
+          minOpacity : 7
+      });
+
+      }
+      
+      if (crime_date1 == d_2014){
+        heatArray2.push([response.GEO_LAT[i], response.GEO_LON[i]])
+        var heat2 = L.heatLayer(heatArray2, {
+          radius : 5,
+          blur : 2,
+          gradient : {.5: 'orange'},
+          minOpacity : 7
+      });
+      }
+
+    if (crime_date1 == d_2015){
+      heatArray3.push([response.GEO_LAT[i], response.GEO_LON[i]])
+        var heat3 = L.heatLayer(heatArray3, {
+          radius : 5,
+          blur : 2,
+          gradient : {.5: 'blue'},
+          minOpacity : 7
+      });
+        }
+
+    if (crime_date1 == d_2016){
+      heatArray4.push([response.GEO_LAT[i], response.GEO_LON[i]])
+        var heat4 = L.heatLayer(heatArray4, {
+          radius : 5, 
+          blur : 2, 
+          gradient : {.5: 'magenta'}, 
+          minOpacity : 7
+      });
+        }
+
+    if (crime_date1 == d_2017){
+      heatArray5.push([response.GEO_LAT[i], response.GEO_LON[i]])
+        var heat5 = L.heatLayer(heatArray5, {
+          radius : 5, 
+          blur : 2, 
+          gradient : {.5: 'yellow'}, 
+          minOpacity : 7
+      });
+
+        }
+
+    else{
+      continue;
+  }}
+  var overlayMaps = {
+        "2013": heat1,
+        "2014": heat2,
+        "2015": heat3,
+        "2016": heat4,
+        "2017": heat5,
+        "THC Dispensaries": points
+      };
+  var baseMaps = {
+  "Default": streets
+};
+  L.control.layers(baseMaps, overlayMaps).addTo(map);
+}
+
+);
+
+
+</script>
+
+</body>
+</html>

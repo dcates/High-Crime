@@ -1,0 +1,35 @@
+body {
+    background-color:#D6D5D5;
+}
+
+.shading-main {
+    background-color:white;
+    padding: 20px;
+}
+
+.shading-links {
+    background-color:white;
+    padding: 20px;
+    border:20px;
+}
+
+img {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+footer {
+    background-color: grey;
+    padding:0px; 
+    text-indent: 20px;
+}
+footer hr {
+    height: 10px;
+    border:none;
+    color:rgb(121, 39, 121);
+    background-color: rgb(121, 39, 121)
+}
+
+.row {
+    background-color: white;
+    padding: 20px;
+}

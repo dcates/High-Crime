@@ -1,0 +1,46 @@
+.blue {
+  stroke: blue;
+}
+
+.text {
+  font-size: 25px;
+  text-anchor: middle;
+}
+
+.Colorado-text {
+  fill: orange;
+}
+
+.US-text {
+  fill: green;
+}
+
+.Denver-text {
+  fill: blue;
+}
+
+.line {
+  fill: none;
+  stroke-width: 2px;
+}
+
+.orange {
+  stroke: orange;
+}
+
+.green {
+  stroke: green;
+}
+
+.tooltip {
+  position: absolute;
+  width: 160px;
+  height: 125px;
+  padding: 10px;
+  font: 12px sans-serif;
+  text-align: center;
+  color: white;
+  background: blue;
+  border: 0;
+  border-radius: 10px;
+}
